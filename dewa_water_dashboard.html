@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEWA — Water Smart Distribution Management System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dewa-green: #00A651;
+  --dewa-green-dark: #007A3D;
+  --dewa-green-light: #E8F7EE;
+  --dewa-green-mid: #C3EBCF;
+  --dewa-navy: #003049;
+  --dewa-navy-mid: #004A73;
+  --dewa-blue: #0078B4;
+  --dewa-blue-light: #E0F0FA;
+  --dewa-gold: #C8922A;
+  --dewa-gold-light: #FFF3DC;
+  --dewa-red: #D32F2F;
+  --dewa-red-light: #FEECEC;
+  --dewa-gray: #F5F6F8;
+  --dewa-gray-mid: #E8EAED;
+  --dewa-gray-dark: #6B7280;
+  --bg: #F0F2F5;
+  --surface: #FFFFFF;
+  --text: #1A2332;
+  --text2: #4B5563;
+  --text3: #9CA3AF;
+  --border: #E5E7EB;
+  --radius: 12px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 13px; }
+
+/* LAYOUT */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 240px; flex-shrink: 0; background: var(--dewa-navy); display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.15); }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; box-shadow: var(--shadow); }
+.content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+/* SIDEBAR */
+.logo-area { padding: 0; background: var(--surface); }
+.logo-band { background: var(--dewa-green); height: 6px; }
+.logo-inner { padding: 16px 20px 14px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.dewa-logo-svg { flex-shrink: 0; }
+.logo-text { color: #fff; }
+.logo-title { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.2; }
+.logo-sub { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; font-weight: 400; }
+.nav { padding: 12px 0; flex: 1; overflow-y: auto; }
+.nav-section { padding: 14px 18px 5px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.35); font-weight: 600; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 18px; cursor: pointer; color: rgba(255,255,255,0.65); font-size: 12.5px; border-left: 3px solid transparent; transition: all 0.15s; margin: 1px 0; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.07); }
+.nav-item.active { color: #fff; background: rgba(0,166,81,0.2); border-left-color: var(--dewa-green); }
+.nav-icon { width: 18px; text-align: center; flex-shrink: 0; }
+.nav-badge { background: var(--dewa-red); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; margin-left: auto; font-weight: 600; }
+.sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.1); }
+.sys-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--dewa-green); animation: pulse 2.5s infinite; flex-shrink: 0; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+.sys-label { font-size: 11px; color: rgba(255,255,255,0.6); }
+.sys-val { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+/* TOPBAR */
+.tb-left { display: flex; align-items: center; gap: 14px; }
+.page-crumb { font-size: 11px; color: var(--text3); }
+.page-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.tb-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tbadge { font-size: 11px; padding: 4px 11px; border-radius: 20px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; }
+.tbadge-green { background: var(--dewa-green-light); color: var(--dewa-green-dark); border: 1px solid var(--dewa-green-mid); }
+.tbadge-yellow { background: var(--dewa-gold-light); color: var(--dewa-gold); border: 1px solid rgba(200,146,42,0.3); }
+.tbadge-red { background: var(--dewa-red-light); color: var(--dewa-red); border: 1px solid rgba(211,47,47,0.3); }
+.tbadge-blue { background: var(--dewa-blue-light); color: var(--dewa-blue); border: 1px solid rgba(0,120,180,0.25); }
+#clock-display { font-size: 12px; color: var(--text3); font-variant-numeric: tabular-nums; min-width: 80px; }
+
+/* GREEN TOP STRIPE */
+.content-header-stripe { height: 3px; background: linear-gradient(90deg, var(--dewa-green), var(--dewa-blue)); margin: -20px -24px 20px; }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; }
+
+/* GRID */
+.g4 { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin-bottom: 16px; }
+.g3 { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 16px; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.g21 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 16px; }
+.g31 { display: grid; grid-template-columns: 3fr 1fr; gap: 14px; margin-bottom: 16px; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+.card-accent { border-left: 3px solid var(--dewa-green); }
+.card-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); font-weight: 600; margin-bottom: 6px; }
+.card-val { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1.1; }
+.card-unit { font-size: 13px; color: var(--text2); font-weight: 400; margin-left: 3px; }
+.card-sub { font-size: 11.5px; color: var(--text2); margin-top: 4px; }
+.card-up { color: var(--dewa-red); font-size: 12px; margin-top: 4px; }
+.card-down { color: var(--dewa-green); font-size: 12px; margin-top: 4px; }
+.card-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.card-title-ar { font-size: 11px; color: var(--text3); font-family: 'Cairo', sans-serif; }
+
+.section-hd { font-size: 13px; font-weight: 600; color: var(--text); margin: 18px 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--dewa-green-mid); display: flex; align-items: center; gap: 8px; }
+.section-hd-ar { font-size: 12px; color: var(--text3); font-family: 'Cairo', sans-serif; margin-left: auto; }
+
+/* TANK */
+.tank-wrap { display: flex; align-items: flex-end; gap: 14px; margin-top: 10px; }
+.tank-body { width: 48px; height: 84px; border: 2px solid var(--border); border-radius: 4px 4px 8px 8px; position: relative; overflow: hidden; background: var(--dewa-gray); flex-shrink: 0; }
+.tank-fill-el { position: absolute; bottom: 0; left: 0; right: 0; transition: height 1s ease; }
+.tank-pct { font-size: 22px; font-weight: 600; line-height: 1; }
+.tank-cap { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.tank-badges { margin-top: 6px; }
+
+/* STATUS BADGES */
+.sbadge { display: inline-block; font-size: 10.5px; padding: 2px 9px; border-radius: 20px; font-weight: 600; }
+.sb-green { background: var(--dewa-green-light); color: var(--dewa-green-dark); }
+.sb-yellow { background: var(--dewa-gold-light); color: var(--dewa-gold); }
+.sb-red { background: var(--dewa-red-light); color: var(--dewa-red); }
+.sb-blue { background: var(--dewa-blue-light); color: var(--dewa-blue); }
+.sb-gray { background: var(--dewa-gray-mid); color: var(--dewa-gray-dark); }
+
+/* PROGRESS BAR */
+.bar-track { height: 5px; border-radius: 3px; background: var(--dewa-gray-mid); overflow: hidden; margin: 6px 0; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+/* PUMP */
+.pump-status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pump-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.pump-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.pump-stat-row { font-size: 12px; color: var(--text2); margin-bottom: 5px; display: flex; justify-content: space-between; }
+.pump-stat-row span { color: var(--text); font-weight: 500; }
+.pump-toggle { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer; }
+.toggle-track { width: 38px; height: 21px; border-radius: 11px; border: 1px solid var(--border); background: var(--dewa-gray-mid); position: relative; transition: background 0.2s; flex-shrink: 0; }
+.toggle-thumb { width: 15px; height: 15px; border-radius: 50%; background: var(--text3); position: absolute; top: 2px; left: 2px; transition: all 0.2s; }
+.toggle-track.on { background: var(--dewa-green); border-color: var(--dewa-green); }
+.toggle-track.on .toggle-thumb { left: 20px; background: #fff; }
+.toggle-label { font-size: 11.5px; color: var(--text2); }
+
+/* ALERT */
+.alert-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 10px; border-left: 3px solid; margin-bottom: 8px; background: var(--surface); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.alert-item.crit { border-left-color: var(--dewa-red); background: var(--dewa-red-light); border-top-color: rgba(211,47,47,0.15); border-right-color: rgba(211,47,47,0.15); border-bottom-color: rgba(211,47,47,0.15); }
+.alert-item.warn { border-left-color: var(--dewa-gold); background: var(--dewa-gold-light); border-top-color: rgba(200,146,42,0.2); border-right-color: rgba(200,146,42,0.2); border-bottom-color: rgba(200,146,42,0.2); }
+.alert-item.info { border-left-color: var(--dewa-blue); background: var(--dewa-blue-light); border-top-color: rgba(0,120,180,0.15); border-right-color: rgba(0,120,180,0.15); border-bottom-color: rgba(0,120,180,0.15); }
+.alert-item.ok { border-left-color: var(--dewa-green); background: var(--dewa-green-light); border-top-color: rgba(0,166,81,0.15); border-right-color: rgba(0,166,81,0.15); border-bottom-color: rgba(0,166,81,0.15); }
+.alert-ico { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.alert-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.alert-desc { font-size: 11.5px; color: var(--text2); margin-top: 2px; line-height: 1.5; }
+.alert-time { margin-left: auto; font-size: 11px; color: var(--text3); white-space: nowrap; padding-left: 10px; font-variant-numeric: tabular-nums; }
+.alert-dismiss { background: transparent; border: 1px solid var(--border); color: var(--text2); font-size: 11px; padding: 3px 10px; border-radius: 6px; cursor: pointer; margin-top: 6px; font-family: inherit; }
+.alert-dismiss:hover { background: var(--dewa-gray); }
+
+/* QUALITY */
+.q-ring { width: 70px; height: 70px; margin: 0 auto 10px; position: relative; }
+.q-ring-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 13px; font-weight: 700; text-align: center; }
+.q-param { font-size: 12.5px; font-weight: 600; color: var(--text); text-align: center; }
+.q-unit { font-size: 11px; color: var(--text3); text-align: center; }
+.q-status-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.safe { background: var(--dewa-green-light); color: var(--dewa-green-dark); }
+.caution { background: var(--dewa-gold-light); color: var(--dewa-gold); }
+.unsafe { background: var(--dewa-red-light); color: var(--dewa-red); }
+
+/* MAINTENANCE */
+.maint-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; box-shadow: var(--shadow); }
+.maint-ico { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.maint-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.maint-sub { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
+.maint-badge { margin-left: auto; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
+.mb-due { background: var(--dewa-red-light); color: var(--dewa-red); }
+.mb-soon { background: var(--dewa-gold-light); color: var(--dewa-gold); }
+.mb-ok { background: var(--dewa-green-light); color: var(--dewa-green-dark); }
+.progress-bar-thin { height: 3px; background: var(--dewa-gray-mid); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.pbt-fill { height: 100%; border-radius: 2px; }
+
+/* USER TABLE */
+.user-table { width: 100%; border-collapse: collapse; }
+.user-table th { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 8px 12px; border-bottom: 2px solid var(--dewa-green-mid); text-align: left; font-weight: 700; }
+.user-table td { font-size: 12.5px; padding: 11px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+.user-table tr:last-child td { border-bottom: none; }
+.user-table tr:hover td { background: var(--dewa-green-light); }
+.role { font-size: 10.5px; padding: 2px 9px; border-radius: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.role-admin { background: rgba(0,48,73,0.1); color: var(--dewa-navy); }
+.role-eng { background: var(--dewa-blue-light); color: var(--dewa-blue); }
+.role-ops { background: var(--dewa-green-light); color: var(--dewa-green-dark); }
+.role-view { background: var(--dewa-gray-mid); color: var(--dewa-gray-dark); }
+.avatar { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-right: 8px; vertical-align: middle; }
+
+/* MAP */
+.map-bg { background: #EEF3F7; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+.map-legend { display: flex; gap: 18px; flex-wrap: wrap; padding: 10px 16px; border-top: 1px solid var(--border); background: var(--surface); }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* LOG */
+.log-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.log-time { color: var(--text3); width: 58px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.log-user { color: var(--dewa-navy-mid); font-weight: 600; flex-shrink: 0; width: 90px; }
+.log-action { color: var(--text2); }
+
+/* CHART */
+.chart-box { position: relative; width: 100%; }
+
+/* KPIS BANNER */
+.kpi-banner { background: var(--dewa-navy); border-radius: var(--radius); padding: 14px 20px; margin-bottom: 16px; display: flex; gap: 28px; flex-wrap: wrap; align-items: center; }
+.kpi-item { text-align: center; }
+.kpi-val { font-size: 20px; font-weight: 700; color: var(--dewa-green); line-height: 1; }
+.kpi-lbl { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+.kpi-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.12); }
+.uae-vision { margin-left: auto; text-align: right; }
+.uae-vision-title { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.uae-vision-sub { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+/* SCADA INFO */
+.scada-card { background: linear-gradient(135deg, var(--dewa-navy) 0%, var(--dewa-navy-mid) 100%); border-radius: var(--radius); padding: 16px 20px; color: #fff; }
+.scada-title { font-size: 12px; font-weight: 700; color: var(--dewa-green); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.scada-row { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.scada-row span { color: #fff; font-weight: 500; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--dewa-gray-mid); border-radius: 3px; }
+
+/* RESPONSIVE */
+@media (max-width: 960px) {
+  .g4 { grid-template-columns: repeat(2,1fr); }
+  .g3 { grid-template-columns: repeat(2,1fr); }
+  .g21, .g31 { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .kpi-banner { gap: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo-area">
+      <div class="logo-band"></div>
+      <div class="logo-inner">
+        <!-- DEWA Logo Mark (SVG) -->
+        <svg class="dewa-logo-svg" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="38" height="38" rx="6" fill="#00A651"/>
+          <text x="19" y="25" font-family="Cairo, Inter, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">DEWA</text>
+        </svg>
+        <div class="logo-text">
+          <div class="logo-title">Water SDMS</div>
+          <div class="logo-sub">Smart Distribution Management</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="nav-section">Monitoring</div>
+      <div class="nav-item active" onclick="goPage('overview',this)">
+        <span class="nav-icon">◈</span>Dashboard Overview
+      </div>
+      <div class="nav-item" onclick="goPage('tanks',this)">
+        <span class="nav-icon">▭</span>Reservoir Management
+      </div>
+      <div class="nav-item" onclick="goPage('pumps',this)">
+        <span class="nav-icon">⊙</span>Pump Station Control
+      </div>
+      <div class="nav-item" onclick="goPage('scada',this)">
+        <span class="nav-icon">◉</span>SCADA / Hydronet
+      </div>
+      <div class="nav-section">Analysis</div>
+      <div class="nav-item" onclick="goPage('analytics',this)">
+        <span class="nav-icon">▲</span>Consumption Analytics
+      </div>
+      <div class="nav-item" onclick="goPage('quality',this)">
+        <span class="nav-icon">◎</span>Water Quality (WQM)
+      </div>
+      <div class="nav-item" onclick="goPage('leakage',this)">
+        <span class="nav-icon">◆</span>Leak Detection &amp; RTU
+      </div>
+      <div class="nav-section">Operations</div>
+      <div class="nav-item" onclick="goPage('alerts',this)">
+        <span class="nav-icon">⚠</span>Alerts &amp; Notifications <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="goPage('maintenance',this)">
+        <span class="nav-icon">⚙</span>Maintenance Schedule
+      </div>
+      <div class="nav-item" onclick="goPage('users',this)">
+        <span class="nav-icon">◎</span>User &amp; Access Control
+      </div>
+      <div class="nav-item" onclick="goPage('map',this)">
+        <span class="nav-icon">⊞</span>Network Map View
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sys-row"><div class="pulse"></div><span class="sys-label">SCADA — All systems live</span></div>
+      <div class="sys-val">Monitoring 3,000+ km network · 10,000+ RTUs</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-left">
+        <div>
+          <div class="page-crumb">DEWA · Water Smart Distribution Management System</div>
+          <div class="page-title" id="page-title">Dashboard Overview</div>
+        </div>
+      </div>
+      <div class="tb-right">
+        <span class="tbadge tbadge-green">● Operational</span>
+        <span class="tbadge tbadge-yellow">2 Warnings</span>
+        <span class="tbadge tbadge-red">1 Critical</span>
+        <span class="tbadge tbadge-blue">Smart Meter: Online</span>
+        <span id="clock-display">Dubai — --:--:--</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content-header-stripe"></div>
+
+      <!-- ===== OVERVIEW ===== -->
+      <div class="page active" id="page-overview">
+        <!-- KPI Banner -->
+        <div class="kpi-banner">
+          <div class="kpi-item"><div class="kpi-val">4.6%</div><div class="kpi-lbl">Network Loss Rate</div></div>
+          <div class="kpi-divider"></div>
+          <div class="kpi-item"><div class="kpi-val">1.04M</div><div class="kpi-lbl">Smart Meters Active</div></div>
+          <div class="kpi-divider"></div>
+          <div class="kpi-item"><div class="kpi-val">99.98%</div><div class="kpi-lbl">Billing Accuracy</div></div>
+          <div class="kpi-divider"></div>
+          <div class="kpi-item"><div class="kpi-val">3,000 km</div><div class="kpi-lbl">Network Coverage</div></div>
+          <div class="kpi-divider"></div>
+          <div class="kpi-item"><div class="kpi-val">94.4%</div><div class="kpi-lbl">AI Leak Detection Acc.</div></div>
+          <div class="uae-vision">
+            <div class="uae-vision-title">UAE Water Security Strategy 2036</div>
+            <div class="uae-vision-sub">Target: 30% reduction in consumption by 2030</div>
+          </div>
+        </div>
+
+        <div class="g4">
+          <div class="card card-accent">
+            <div class="card-label">Total consumption today</div>
+            <div class="card-val">2.84<span class="card-unit">MIG</span></div>
+            <div class="card-down">↓ 3.1% vs yesterday</div>
+            <div class="card-sub">Equiv. AED 28,640 billed</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Network flow rate</div>
+            <div class="card-val" id="ov-flow">1,420<span class="card-unit">m³/h</span></div>
+            <div class="card-sub">Normal operating range</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Avg. system pressure</div>
+            <div class="card-val" id="ov-pressure">3.2<span class="card-unit">bar</span></div>
+            <div class="card-sub" style="color:var(--dewa-green);">Within optimal range</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Active pumping stations</div>
+            <div class="card-val">14<span class="card-unit">/ 16</span></div>
+            <div class="card-sub">2 stations on standby</div>
+          </div>
+        </div>
+
+        <div class="g3">
+          <div class="card">
+            <div class="card-title">
+              Al Quoz Reservoir
+              <span class="card-title-ar">خزان القوز</span>
+            </div>
+            <div class="tank-wrap">
+              <div class="tank-body">
+                <div class="tank-fill-el" style="height:82%; background:linear-gradient(180deg,#00A651,#007A3D);"></div>
+              </div>
+              <div style="flex:1;">
+                <div class="tank-pct" style="color:var(--dewa-green);">82%</div>
+                <div class="tank-cap">820 / 1,000 MIG capacity</div>
+                <div class="bar-track"><div class="bar-fill" style="width:82%;background:var(--dewa-green);"></div></div>
+                <div class="tank-badges"><span class="sbadge sb-green">Operational</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">
+              Jebel Ali Reservoir
+              <span class="card-title-ar">خزان جبل علي</span>
+            </div>
+            <div class="tank-wrap">
+              <div class="tank-body">
+                <div class="tank-fill-el" style="height:41%; background:linear-gradient(180deg,#C8922A,#A0721F);"></div>
+              </div>
+              <div style="flex:1;">
+                <div class="tank-pct" style="color:var(--dewa-gold);">41%</div>
+                <div class="tank-cap">164 / 400 MIG capacity</div>
+                <div class="bar-track"><div class="bar-fill" style="width:41%;background:var(--dewa-gold);"></div></div>
+                <div class="tank-badges"><span class="sbadge sb-yellow">Low — Schedule Refill</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">
+              Warsan Reservoir
+              <span class="card-title-ar">خزان ورسان</span>
+            </div>
+            <div class="tank-wrap">
+              <div class="tank-body">
+                <div class="tank-fill-el" style="height:94%; background:linear-gradient(180deg,#00A651,#007A3D);"></div>
+              </div>
+              <div style="flex:1;">
+                <div class="tank-pct" style="color:var(--dewa-green);">94%</div>
+                <div class="tank-cap">282 / 300 MIG capacity</div>
+                <div class="bar-track"><div class="bar-fill" style="width:94%;background:var(--dewa-green);"></div></div>
+                <div class="tank-badges"><span class="sbadge sb-green">Full — Normal</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="g21">
+          <div class="card">
+            <div class="card-title">24-hour consumption trend (MIG)</div>
+            <div class="chart-box" style="height:200px;">
+              <canvas id="chart-overview"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Active system alerts</div>
+            <div class="alert-item crit" style="margin-top:6px;">
+              <div class="alert-ico">⚠</div>
+              <div>
+                <div class="alert-title">Leak — Al Barsha Zone 4</div>
+                <div class="alert-desc">Smart Ball detected anomaly at pipeline JA-204. Est. loss: 120 L/h.</div>
+              </div>
+              <div class="alert-time">09:14</div>
+            </div>
+            <div class="alert-item warn">
+              <div class="alert-ico">◆</div>
+              <div>
+                <div class="alert-title">Jebel Ali reservoir below 45%</div>
+                <div class="alert-desc">Desalination transfer recommended.</div>
+              </div>
+              <div class="alert-time">08:52</div>
+            </div>
+            <div class="alert-item info">
+              <div class="alert-ico">◉</div>
+              <div>
+                <div class="alert-title">Pump Station 7 maintenance due</div>
+                <div class="alert-desc">Scheduled in 3 days per CMMS.</div>
+              </div>
+              <div class="alert-time">08:00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TANKS ===== -->
+      <div class="page" id="page-tanks">
+        <div class="section-hd">Reservoir management <span class="section-hd-ar">إدارة الخزانات</span></div>
+        <div class="g3">
+          <div class="card">
+            <div class="card-title">Al Quoz Reservoir <span class="card-title-ar">القوز</span></div>
+            <div style="text-align:center;margin:12px 0;">
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <circle cx="45" cy="45" r="38" fill="none" stroke="#E5E7EB" stroke-width="7"/>
+                <circle cx="45" cy="45" r="38" fill="none" stroke="#00A651" stroke-width="7" stroke-dasharray="239" stroke-dashoffset="43" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+                <text x="45" y="50" font-family="Inter" font-size="16" font-weight="700" fill="#00A651" text-anchor="middle">82%</text>
+              </svg>
+            </div>
+            <div class="pump-stat-row">Total Capacity <span>1,000 MIG</span></div>
+            <div class="pump-stat-row">Current Volume <span>820 MIG</span></div>
+            <div class="pump-stat-row">Inflow Rate <span>680 m³/h</span></div>
+            <div class="pump-stat-row">Outflow Rate <span>520 m³/h</span></div>
+            <div class="pump-stat-row">Overflow Sensor <span style="color:var(--dewa-green);">Clear</span></div>
+            <div class="pump-stat-row">Last Inspection <span>2 Apr 2026</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Jebel Ali Reservoir <span class="card-title-ar">جبل علي</span></div>
+            <div style="text-align:center;margin:12px 0;">
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <circle cx="45" cy="45" r="38" fill="none" stroke="#E5E7EB" stroke-width="7"/>
+                <circle cx="45" cy="45" r="38" fill="none" stroke="#C8922A" stroke-width="7" stroke-dasharray="239" stroke-dashoffset="141" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+                <text x="45" y="50" font-family="Inter" font-size="16" font-weight="700" fill="#C8922A" text-anchor="middle">41%</text>
+              </svg>
+            </div>
+            <div class="pump-stat-row">Total Capacity <span>400 MIG</span></div>
+            <div class="pump-stat-row">Current Volume <span>164 MIG</span></div>
+            <div class="pump-stat-row">Inflow Rate <span>210 m³/h</span></div>
+            <div class="pump-stat-row">Outflow Rate <span>380 m³/h</span></div>
+            <div class="pump-stat-row">Overflow Sensor <span style="color:var(--dewa-green);">Clear</span></div>
+            <div class="pump-stat-row">Status <span style="color:var(--dewa-gold);">Low — Action Required</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Warsan Reservoir <span class="card-title-ar">ورسان</span></div>
+            <div style="text-align:center;margin:12px 0;">
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <circle cx="45" cy="45" r="38" fill="none" stroke="#E5E7EB" stroke-width="7"/>
+                <circle cx="45" cy="45" r="38" fill="none" stroke="#00A651" stroke-width="7" stroke-dasharray="239" stroke-dashoffset="14" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+                <text x="45" y="50" font-family="Inter" font-size="16" font-weight="700" fill="#00A651" text-anchor="middle">94%</text>
+              </svg>
+            </div>
+            <div class="pump-stat-row">Total Capacity <span>300 MIG</span></div>
+            <div class="pump-stat-row">Current Volume <span>282 MIG</span></div>
+            <div class="pump-stat-row">Inflow Rate <span>120 m³/h</span></div>
+            <div class="pump-stat-row">Outflow Rate <span>95 m³/h</span></div>
+            <div class="pump-stat-row">Overflow Sensor <span style="color:var(--dewa-green);">Clear</span></div>
+            <div class="pump-stat-row">Status <span style="color:var(--dewa-green);">Full — Normal</span></div>
+          </div>
+        </div>
+        <div class="section-hd">Reservoir refill history — last 7 days <span class="section-hd-ar">سجل إعادة التعبئة</span></div>
+        <div class="card">
+          <div class="chart-box" style="height:210px;">
+            <canvas id="chart-tanks"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PUMPS ===== -->
+      <div class="page" id="page-pumps">
+        <div class="section-hd">Pump station control <span class="section-hd-ar">محطات الضخ</span></div>
+        <div class="g3">
+          <div class="card">
+            <div class="pump-status-row">
+              <div class="pump-dot" style="background:var(--dewa-green);box-shadow:0 0 0 3px var(--dewa-green-light);"></div>
+              <div class="pump-name">Station PS-07 — Deira</div>
+            </div>
+            <div class="pump-stat-row">Status <span style="color:var(--dewa-green);">Running</span></div>
+            <div class="pump-stat-row">Runtime today <span>7h 22m</span></div>
+            <div class="pump-stat-row">Flow output <span>340 m³/h</span></div>
+            <div class="pump-stat-row">Power draw <span>186 kW</span></div>
+            <div class="pump-stat-row">Motor temp. <span style="color:var(--dewa-green);">64°C — Normal</span></div>
+            <div class="pump-stat-row">Vibration <span style="color:var(--dewa-green);">Low — Stable</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:64%;background:var(--dewa-green);"></div></div>
+            <div style="font-size:10.5px;color:var(--text3);margin-bottom:8px;">Motor temperature: 64°C / 100°C</div>
+            <div class="pump-toggle" onclick="togglePump(this)">
+              <div class="toggle-track on"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Running — click to stop</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="pump-status-row">
+              <div class="pump-dot" style="background:var(--dewa-green);box-shadow:0 0 0 3px var(--dewa-green-light);"></div>
+              <div class="pump-name">Station PS-11 — Jebel Ali</div>
+            </div>
+            <div class="pump-stat-row">Status <span style="color:var(--dewa-green);">Running</span></div>
+            <div class="pump-stat-row">Runtime today <span>5h 04m</span></div>
+            <div class="pump-stat-row">Flow output <span>280 m³/h</span></div>
+            <div class="pump-stat-row">Power draw <span>154 kW</span></div>
+            <div class="pump-stat-row">Motor temp. <span style="color:var(--dewa-gold);">79°C — Elevated</span></div>
+            <div class="pump-stat-row">Vibration <span style="color:var(--dewa-gold);">Medium — Monitor</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:79%;background:var(--dewa-gold);"></div></div>
+            <div style="font-size:10.5px;color:var(--text3);margin-bottom:8px;">Motor temperature: 79°C / 100°C</div>
+            <div class="pump-toggle" onclick="togglePump(this)">
+              <div class="toggle-track on"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Running — click to stop</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="pump-status-row">
+              <div class="pump-dot" style="background:var(--text3);"></div>
+              <div class="pump-name">Station PS-14 — Al Quoz</div>
+            </div>
+            <div class="pump-stat-row">Status <span style="color:var(--text3);">Standby</span></div>
+            <div class="pump-stat-row">Runtime today <span>0h 00m</span></div>
+            <div class="pump-stat-row">Flow output <span>— m³/h</span></div>
+            <div class="pump-stat-row">Power draw <span>0.0 kW</span></div>
+            <div class="pump-stat-row">Motor temp. <span>Ambient</span></div>
+            <div class="pump-stat-row">Auto-start trigger <span style="color:var(--dewa-blue);">Tank &lt; 30%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:4%;background:var(--text3);"></div></div>
+            <div style="font-size:10.5px;color:var(--text3);margin-bottom:8px;">Motor temperature: standby</div>
+            <div class="pump-toggle" onclick="togglePump(this)">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Stopped — click to start</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-hd">Pumping station runtime — this week <span class="section-hd-ar">وقت تشغيل محطات الضخ</span></div>
+        <div class="card">
+          <div class="chart-box" style="height:200px;">
+            <canvas id="chart-pumps"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SCADA ===== -->
+      <div class="page" id="page-scada">
+        <div class="section-hd">SCADA / Hydronet — Real-time control centre <span class="section-hd-ar">مركز التحكم</span></div>
+        <div class="g3">
+          <div class="scada-card">
+            <div class="scada-title">SCADA Centre — Al Ruwaiyah</div>
+            <div class="scada-row">System status <span style="color:var(--dewa-green);">Online ●</span></div>
+            <div class="scada-row">RTUs connected <span>10,247</span></div>
+            <div class="scada-row">Data update rate <span>Every 15 min</span></div>
+            <div class="scada-row">Network monitored <span>3,000+ km</span></div>
+            <div class="scada-row">Hydraulic modelling <span style="color:var(--dewa-green);">Active</span></div>
+            <div class="scada-row">Training simulator <span style="color:var(--dewa-green);">Standby</span></div>
+          </div>
+          <div class="scada-card">
+            <div class="scada-title">Hydronet AI — Deep Learning Monitor</div>
+            <div class="scada-row">AI engine <span style="color:var(--dewa-green);">Running</span></div>
+            <div class="scada-row">Anomaly detection <span style="color:var(--dewa-green);">Active</span></div>
+            <div class="scada-row">Leak accuracy <span>94.4%</span></div>
+            <div class="scada-row">Events today <span>3 anomalies</span></div>
+            <div class="scada-row">Auto-isolation <span style="color:var(--dewa-green);">Enabled</span></div>
+            <div class="scada-row">SCADA integration <span style="color:var(--dewa-green);">Linked</span></div>
+          </div>
+          <div class="scada-card">
+            <div class="scada-title">Smart Ball Inspection</div>
+            <div class="scada-row">Deployments 2026 <span>12</span></div>
+            <div class="scada-row">Leaks detected (2021–) <span>81</span></div>
+            <div class="scada-row">Last deployment <span>3 Apr 2026</span></div>
+            <div class="scada-row">Last result <span style="color:var(--dewa-green);">No leak found</span></div>
+            <div class="scada-row">Next scheduled <span>10 Apr 2026</span></div>
+            <div class="scada-row">Pipeline: <span>JA Transmission</span></div>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-title">RTU status by zone</div>
+            <div class="chart-box" style="height:200px;">
+              <canvas id="chart-rtu"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Network KPIs vs global benchmarks</div>
+            <div style="margin-top:6px;">
+              <div class="pump-stat-row" style="margin-bottom:8px;">Water network losses (DEWA 2023) <span style="color:var(--dewa-green);">4.6%</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:9%;background:var(--dewa-green);"></div></div>
+              <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px;">North America benchmark: ~15%</div>
+
+              <div class="pump-stat-row" style="margin-bottom:8px;">Smart meter billing accuracy <span style="color:var(--dewa-green);">99.98%</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:99.98%;background:var(--dewa-green);"></div></div>
+              <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px;">Industry average: ~97%</div>
+
+              <div class="pump-stat-row" style="margin-bottom:8px;">Leak detection AI accuracy <span style="color:var(--dewa-green);">94.4%</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:94%;background:var(--dewa-green);"></div></div>
+              <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px;">IoT-based detection model (2026)</div>
+
+              <div class="pump-stat-row" style="margin-bottom:8px;">Water savings (2013–2023) <span style="color:var(--dewa-green);">5,620M gal</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:76%;background:var(--dewa-blue);"></div></div>
+              <div style="font-size:10.5px;color:var(--text3);">Equivalent to AED 225 million saved</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ANALYTICS ===== -->
+      <div class="page" id="page-analytics">
+        <div class="g4">
+          <div class="card card-accent">
+            <div class="card-label">This month (MIG)</div>
+            <div class="card-val">84.2</div>
+            <div class="card-up">↑ 2.1% vs last month</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Peak demand hour</div>
+            <div class="card-val">07<span class="card-unit">:00 AM</span></div>
+            <div class="card-sub">1,840 m³/h peak flow</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Daily avg. this week</div>
+            <div class="card-val">2.78<span class="card-unit">MIG</span></div>
+            <div class="card-down">↓ 1.8% vs last week</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Tariff (residential)</div>
+            <div class="card-val">3.00<span class="card-unit">fils/gal</span></div>
+            <div class="card-sub">Slab 1: 0–6,000 gal/month</div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-title">Monthly consumption — 2026 (million imperial gallons)</div>
+          <div class="chart-box" style="height:210px;">
+            <canvas id="chart-monthly"></canvas>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-title">Hourly demand pattern (avg. weekday)</div>
+            <div class="chart-box" style="height:190px;">
+              <canvas id="chart-hourly"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Distribution by customer segment</div>
+            <div class="chart-box" style="height:190px;">
+              <canvas id="chart-segment"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== QUALITY ===== -->
+      <div class="page" id="page-quality">
+        <div class="section-hd">Water Quality Monitoring (WQM) <span class="section-hd-ar">مراقبة جودة المياه</span></div>
+        <div class="g4">
+          <div class="card" style="text-align:center;">
+            <div class="q-ring">
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#E5E7EB" stroke-width="6"/>
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#00A651" stroke-width="6" stroke-dasharray="176" stroke-dashoffset="38" stroke-linecap="round" transform="rotate(-90 35 35)"/>
+              </svg>
+              <div class="q-ring-label" style="color:var(--dewa-green);">7.4</div>
+            </div>
+            <div class="q-param">pH Level</div>
+            <div class="q-unit">Target: 6.5 – 8.5</div>
+            <div style="text-align:center;"><span class="q-status-tag safe">Safe — WHO Standard</span></div>
+          </div>
+          <div class="card" style="text-align:center;">
+            <div class="q-ring">
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#E5E7EB" stroke-width="6"/>
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#0078B4" stroke-width="6" stroke-dasharray="176" stroke-dashoffset="141" stroke-linecap="round" transform="rotate(-90 35 35)"/>
+              </svg>
+              <div class="q-ring-label" style="color:var(--dewa-blue);">2.8</div>
+            </div>
+            <div class="q-param">Turbidity</div>
+            <div class="q-unit">NTU · Limit: &lt; 5 NTU</div>
+            <div style="text-align:center;"><span class="q-status-tag safe">Safe</span></div>
+          </div>
+          <div class="card" style="text-align:center;">
+            <div class="q-ring">
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#E5E7EB" stroke-width="6"/>
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#C8922A" stroke-width="6" stroke-dasharray="176" stroke-dashoffset="79" stroke-linecap="round" transform="rotate(-90 35 35)"/>
+              </svg>
+              <div class="q-ring-label" style="color:var(--dewa-gold);font-size:11px;">27°C</div>
+            </div>
+            <div class="q-param">Temperature</div>
+            <div class="q-unit">Limit: &lt; 25°C</div>
+            <div style="text-align:center;"><span class="q-status-tag caution">Caution — Dubai summer</span></div>
+          </div>
+          <div class="card" style="text-align:center;">
+            <div class="q-ring">
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#E5E7EB" stroke-width="6"/>
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#00A651" stroke-width="6" stroke-dasharray="176" stroke-dashoffset="55" stroke-linecap="round" transform="rotate(-90 35 35)"/>
+              </svg>
+              <div class="q-ring-label" style="color:var(--dewa-green);font-size:11px;">320</div>
+            </div>
+            <div class="q-param">TDS</div>
+            <div class="q-unit">mg/L · UAE limit: &lt; 500</div>
+            <div style="text-align:center;"><span class="q-status-tag safe">Safe</span></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-title">Quality parameters — 7-day trend</div>
+          <div class="chart-box" style="height:210px;">
+            <canvas id="chart-quality"></canvas>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="card">
+            <div class="card-label">Chlorine residual</div>
+            <div class="card-val">0.42<span class="card-unit">mg/L</span></div>
+            <div class="card-sub" style="color:var(--dewa-green);">Within UAE standard 0.2–0.8 mg/L</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Hardness (CaCO₃)</div>
+            <div class="card-val">180<span class="card-unit">mg/L</span></div>
+            <div class="card-sub">Moderate — desalinated blend</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Overall water quality</div>
+            <div class="card-val" style="color:var(--dewa-green);">Safe</div>
+            <div class="card-sub">Compliant — UAE/WHO standards</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== LEAKAGE ===== -->
+      <div class="page" id="page-leakage">
+        <div class="section-hd">Leak detection & RTU monitoring <span class="section-hd-ar">كشف التسربات</span></div>
+        <div class="g4">
+          <div class="card card-accent">
+            <div class="card-label">Leaks detected 2026</div>
+            <div class="card-val" style="color:var(--dewa-red);">3</div>
+            <div class="card-sub">1 active · 2 resolved</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Smart Ball detections (since 2021)</div>
+            <div class="card-val">81</div>
+            <div class="card-sub">Transmission network</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Leakages via High Usage Alert</div>
+            <div class="card-val">1.81M</div>
+            <div class="card-sub">Detected since service launch</div>
+          </div>
+          <div class="card card-accent">
+            <div class="card-label">Current network loss</div>
+            <div class="card-val" style="color:var(--dewa-green);">4.6%</div>
+            <div class="card-sub">World's lowest — vs 15% N. America</div>
+          </div>
+        </div>
+        <div class="alert-item crit" style="margin-bottom:8px;">
+          <div class="alert-ico">⚠</div>
+          <div style="flex:1;">
+            <div class="alert-title">Active leak — Al Barsha Zone 4, Pipeline JA-204</div>
+            <div class="alert-desc">Smart Ball and noise logger correlation confirms breach at GPS 25.1042°N 55.2002°E. Estimated loss: 120 L/h. Auto-isolation valve triggered. Field team dispatched (ETA 14 min).</div>
+            <button class="alert-dismiss" onclick="dismissAlert(this)">Acknowledge</button>
+          </div>
+          <div class="alert-time">09:14 AM</div>
+        </div>
+        <div class="section-hd">Resolved leaks — last 30 days</div>
+        <div class="alert-item ok">
+          <div class="alert-ico">✓</div>
+          <div><div class="alert-title">Pipeline DN-312 — Karama zone breach repaired</div><div class="alert-desc">Detected by Hydronet AI, isolated automatically in 8 sec. Repair completed in 2h 14m.</div></div>
+          <div class="alert-time">31 Mar</div>
+        </div>
+        <div class="alert-item ok">
+          <div class="alert-ico">✓</div>
+          <div><div class="alert-title">Distribution line FL-089 — DEWA Smart Meter alert (high usage)</div><div class="alert-desc">Customer notified via app. Plumber engaged. Loss: 380 L before detection.</div></div>
+          <div class="alert-time">24 Mar</div>
+        </div>
+        <div class="section-hd">Pressure management — District Metered Areas (DMAs)</div>
+        <div class="g3">
+          <div class="card"><div class="card-label">DMA — Deira</div><div class="card-val">3.4<span class="card-unit">bar</span></div><div class="card-sub" style="color:var(--dewa-green);">Optimal pressure</div></div>
+          <div class="card"><div class="card-label">DMA — Bur Dubai</div><div class="card-val">2.9<span class="card-unit">bar</span></div><div class="card-sub" style="color:var(--dewa-gold);">Slightly below target</div></div>
+          <div class="card"><div class="card-label">DMA — Jebel Ali</div><div class="card-val">3.1<span class="card-unit">bar</span></div><div class="card-sub" style="color:var(--dewa-green);">Optimal pressure</div></div>
+        </div>
+      </div>
+
+      <!-- ===== ALERTS ===== -->
+      <div class="page" id="page-alerts">
+        <div class="section-hd">Active alerts <span class="section-hd-ar">التنبيهات النشطة</span></div>
+        <div class="alert-item crit">
+          <div class="alert-ico">⚠</div>
+          <div style="flex:1;">
+            <div class="alert-title">Leak confirmed — Al Barsha Zone 4 (Pipeline JA-204)</div>
+            <div class="alert-desc">Continuous abnormal flow detected while PS-11 is offline. Smart Ball & acoustic correlator confirm breach. Estimated water loss: 120 L/h. Isolation valve activated. Priority: P1 — Critical.</div>
+            <button class="alert-dismiss" onclick="dismissAlert(this)">Acknowledge</button>
+          </div>
+          <div class="alert-time">09:14 AM</div>
+        </div>
+        <div class="alert-item warn">
+          <div class="alert-ico">◆</div>
+          <div style="flex:1;">
+            <div class="alert-title">Jebel Ali reservoir below 45% threshold</div>
+            <div class="alert-desc">Current level 41% (164 MIG). Desalination plant transfer recommended. Auto-alert sent to operations team.</div>
+            <button class="alert-dismiss" onclick="dismissAlert(this)">Acknowledge</button>
+          </div>
+          <div class="alert-time">08:52 AM</div>
+        </div>
+        <div class="alert-item warn">
+          <div class="alert-ico">◆</div>
+          <div style="flex:1;">
+            <div class="alert-title">PS-11 motor temperature elevated (79°C)</div>
+            <div class="alert-desc">Pump Station 11 (Jebel Ali) approaching 80°C threshold. Reduce load or engage cooling system. CMMS work order created: WO-2026-0407-11.</div>
+            <button class="alert-dismiss" onclick="dismissAlert(this)">Acknowledge</button>
+          </div>
+          <div class="alert-time">08:34 AM</div>
+        </div>
+        <div class="section-hd">Resolved — last 24 hours</div>
+        <div class="alert-item ok">
+          <div class="alert-ico">✓</div>
+          <div><div class="alert-title">PS-07 maintenance window completed successfully</div><div class="alert-desc">Station resumed normal operation at 06:00. Flow restored to 340 m³/h.</div></div>
+          <div class="alert-time">06:00 AM</div>
+        </div>
+        <div class="alert-item ok">
+          <div class="alert-ico">✓</div>
+          <div><div class="alert-title">Warsan reservoir auto-refill completed (94%)</div><div class="alert-desc">Automated transfer from desalination plant completed during low-demand window 03:00–05:30.</div></div>
+          <div class="alert-time">05:30 AM</div>
+        </div>
+        <div class="alert-item info">
+          <div class="alert-ico">◉</div>
+          <div><div class="alert-title">High Water Usage Alert — Account #DXB-00482910</div><div class="alert-desc">Unusual consumption pattern detected at Al Quoz residential. Customer notified via SMS and DEWA app. Possible post-meter leak.</div></div>
+          <div class="alert-time">04:12 AM</div>
+        </div>
+      </div>
+
+      <!-- ===== MAINTENANCE ===== -->
+      <div class="page" id="page-maintenance">
+        <div class="section-hd">CMMS — Maintenance schedule <span class="section-hd-ar">جدول الصيانة</span></div>
+        <div class="maint-item">
+          <div class="maint-ico" style="background:var(--dewa-red-light);">⚙</div>
+          <div style="flex:1;">
+            <div class="maint-title">PS-07 Deira — Full pump overhaul</div>
+            <div class="maint-sub">WO-2026-0401-07 · Last service: 6 months ago · 5,800 hrs runtime</div>
+            <div class="progress-bar-thin"><div class="pbt-fill" style="width:98%;background:var(--dewa-red);"></div></div>
+          </div>
+          <span class="maint-badge mb-due">Overdue</span>
+        </div>
+        <div class="maint-item">
+          <div class="maint-ico" style="background:var(--dewa-gold-light);">🔧</div>
+          <div style="flex:1;">
+            <div class="maint-title">Jebel Ali Reservoir — Valve & seal inspection</div>
+            <div class="maint-sub">WO-2026-0407-JA · Scheduled: 10 Apr 2026</div>
+            <div class="progress-bar-thin"><div class="pbt-fill" style="width:70%;background:var(--dewa-gold);"></div></div>
+          </div>
+          <span class="maint-badge mb-soon">In 3 days</span>
+        </div>
+        <div class="maint-item">
+          <div class="maint-ico" style="background:var(--dewa-gold-light);">◉</div>
+          <div style="flex:1;">
+            <div class="maint-title">WQM sensor array — Calibration (Zone 3 & 5)</div>
+            <div class="maint-sub">WO-2026-0419-WQ · Scheduled: 19 Apr 2026</div>
+            <div class="progress-bar-thin"><div class="pbt-fill" style="width:48%;background:var(--dewa-gold);"></div></div>
+          </div>
+          <span class="maint-badge mb-soon">In 12 days</span>
+        </div>
+        <div class="maint-item">
+          <div class="maint-ico" style="background:var(--dewa-green-light);">▭</div>
+          <div style="flex:1;">
+            <div class="maint-title">Al Quoz Reservoir — Interior cleaning & de-silting</div>
+            <div class="maint-sub">WO-2026-Q2-AQ · Scheduled: Q2 2026 · Annual programme</div>
+            <div class="progress-bar-thin"><div class="pbt-fill" style="width:25%;background:var(--dewa-green);"></div></div>
+          </div>
+          <span class="maint-badge mb-ok">4 months</span>
+        </div>
+        <div class="maint-item">
+          <div class="maint-ico" style="background:var(--dewa-green-light);">◎</div>
+          <div style="flex:1;">
+            <div class="maint-title">Smart Meter diagnostic sweep — Batch 400K</div>
+            <div class="maint-sub">Automated via Smart Meters Analysis & Diagnosis Centre · Monthly cycle</div>
+            <div class="progress-bar-thin"><div class="pbt-fill" style="width:15%;background:var(--dewa-green);"></div></div>
+          </div>
+          <span class="maint-badge mb-ok">Ongoing</span>
+        </div>
+        <div class="section-hd">Spare parts & inventory</div>
+        <div class="g4">
+          <div class="card"><div class="card-label">Pump seals (PS-grade)</div><div class="card-val">24<span class="card-unit">sets</span></div><div class="card-sub" style="color:var(--dewa-green);">Stock adequate</div></div>
+          <div class="card"><div class="card-label">RTU modules</div><div class="card-val">6<span class="card-unit">units</span></div><div class="card-sub" style="color:var(--dewa-gold);">Reorder recommended</div></div>
+          <div class="card"><div class="card-label">Pressure valves DN200</div><div class="card-val">18<span class="card-unit">units</span></div><div class="card-sub" style="color:var(--dewa-green);">Stock adequate</div></div>
+          <div class="card"><div class="card-label">WQM sensor probes</div><div class="card-val">9<span class="card-unit">units</span></div><div class="card-sub" style="color:var(--dewa-green);">Stock adequate</div></div>
+        </div>
+      </div>
+
+      <!-- ===== USERS ===== -->
+      <div class="page" id="page-users">
+        <div class="section-hd">User & access management <span class="section-hd-ar">إدارة المستخدمين</span></div>
+        <div class="card" style="margin-bottom:16px;overflow-x:auto;">
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>Last active</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="avatar" style="background:rgba(0,48,73,0.12);color:var(--dewa-navy);">MA</div>Mohammed Al Rashidi</td>
+                <td><span class="role role-admin">Admin</span></td>
+                <td>Water Network Ops</td>
+                <td>Now</td>
+                <td><span class="sbadge sb-green">● Online</span></td>
+              </tr>
+              <tr>
+                <td><div class="avatar" style="background:var(--dewa-blue-light);color:var(--dewa-blue);">FS</div>Fatima Al Suwaidi</td>
+                <td><span class="role role-eng">Engineer</span></td>
+                <td>SCADA Centre</td>
+                <td>8 min ago</td>
+                <td><span class="sbadge sb-green">● Online</span></td>
+              </tr>
+              <tr>
+                <td><div class="avatar" style="background:var(--dewa-green-light);color:var(--dewa-green-dark);">KA</div>Khalid Al Mansoori</td>
+                <td><span class="role role-ops">Operations</span></td>
+                <td>Field Maintenance</td>
+                <td>34 min ago</td>
+                <td><span class="sbadge sb-green">● Online</span></td>
+              </tr>
+              <tr>
+                <td><div class="avatar" style="background:var(--dewa-gray-mid);color:var(--dewa-gray-dark);">NJ</div>Noor Al Jaber</td>
+                <td><span class="role role-view">Viewer</span></td>
+                <td>Customer Affairs</td>
+                <td>2h ago</td>
+                <td><span class="sbadge sb-gray">Offline</span></td>
+              </tr>
+              <tr>
+                <td><div class="avatar" style="background:var(--dewa-gray-mid);color:var(--dewa-gray-dark);">SA</div>Sara Al Amiri</td>
+                <td><span class="role role-view">Viewer</span></td>
+                <td>Sustainability</td>
+                <td>Yesterday</td>
+                <td><span class="sbadge sb-gray">Offline</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="section-hd">Recent system activity log</div>
+        <div class="card">
+          <div class="log-item"><span class="log-time">09:14</span><span class="log-user">System</span><span class="log-action">Leak alert triggered — Al Barsha Zone 4, Pipeline JA-204. Auto-isolation activated.</span></div>
+          <div class="log-item"><span class="log-time">08:52</span><span class="log-user">System</span><span class="log-action">Jebel Ali reservoir low-level warning (41%). CMMS notification dispatched.</span></div>
+          <div class="log-item"><span class="log-time">08:30</span><span class="log-user">F. Al Suwaidi</span><span class="log-action">Acknowledged PS-11 temperature alert. Cooling protocol initiated via SCADA.</span></div>
+          <div class="log-item"><span class="log-time">07:15</span><span class="log-user">M. Al Rashidi</span><span class="log-action">Updated CMMS schedule for PS-07 overhaul. Work order WO-2026-0407 approved.</span></div>
+          <div class="log-item"><span class="log-time">06:00</span><span class="log-user">System</span><span class="log-action">PS-07 maintenance window completed. Station auto-restarted. Flow: 340 m³/h.</span></div>
+          <div class="log-item"><span class="log-time">05:30</span><span class="log-user">System</span><span class="log-action">Warsan reservoir auto-refill complete. Level: 94%. Desalination transfer ended.</span></div>
+        </div>
+      </div>
+
+      <!-- ===== MAP ===== -->
+      <div class="page" id="page-map">
+        <div class="section-hd">Dubai water network — geographic view <span class="section-hd-ar">شبكة المياه في دبي</span></div>
+        <div class="map-bg" style="margin-bottom:16px;">
+          <svg width="100%" viewBox="0 0 820 340" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+            <defs>
+              <pattern id="mapgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,120,180,0.06)" stroke-width="1"/>
+              </pattern>
+            </defs>
+            <rect width="820" height="340" fill="#EEF3F7"/>
+            <rect width="820" height="340" fill="url(#mapgrid)"/>
+            <!-- Dubai coastline suggestion -->
+            <path d="M 0 240 Q 150 220 300 230 Q 500 240 700 200 Q 750 195 820 205" fill="none" stroke="rgba(0,120,180,0.25)" stroke-width="2" stroke-dasharray="6,4"/>
+            <text x="700" y="218" font-size="10" fill="rgba(0,120,180,0.5)" font-family="Inter">Arabian Gulf</text>
+            <!-- Transmission pipelines -->
+            <line x1="100" y1="100" x2="380" y2="120" stroke="#00A651" stroke-width="3" opacity="0.7"/>
+            <line x1="380" y1="120" x2="580" y2="100" stroke="#00A651" stroke-width="3" opacity="0.7"/>
+            <line x1="380" y1="120" x2="380" y2="220" stroke="#00A651" stroke-width="2.5" opacity="0.7"/>
+            <line x1="380" y1="220" x2="200" y2="260" stroke="#C8922A" stroke-width="2.5" stroke-dasharray="7,4" opacity="0.8"/>
+            <line x1="580" y1="100" x2="680" y2="80" stroke="#00A651" stroke-width="2.5" opacity="0.7"/>
+            <line x1="580" y1="100" x2="580" y2="200" stroke="#00A651" stroke-width="2" opacity="0.6"/>
+            <!-- Leak indicator -->
+            <circle cx="290" cy="245" r="10" fill="rgba(211,47,47,0.15)" stroke="#D32F2F" stroke-width="1.5">
+              <animate attributeName="r" values="10;18;10" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="290" cy="245" r="5" fill="#D32F2F"/>
+            <text x="302" y="242" fill="#D32F2F" font-size="9.5" font-family="Inter" font-weight="600">⚠ Leak JA-204</text>
+            <!-- Al Quoz Reservoir -->
+            <rect x="68" y="75" width="64" height="50" rx="5" fill="rgba(0,166,81,0.12)" stroke="#00A651" stroke-width="1.8"/>
+            <rect x="68" y="103" width="64" height="22" fill="rgba(0,166,81,0.45)" rx="0"/>
+            <text x="100" y="96" fill="#007A3D" font-size="9.5" font-family="Inter" font-weight="600" text-anchor="middle">Al Quoz</text>
+            <text x="100" y="108" fill="#007A3D" font-size="8.5" font-family="Inter" text-anchor="middle">Reservoir</text>
+            <text x="100" y="122" fill="#00A651" font-size="10" font-family="Inter" font-weight="700" text-anchor="middle">82%</text>
+            <!-- Jebel Ali Reservoir -->
+            <rect x="548" y="75" width="64" height="50" rx="5" fill="rgba(200,146,42,0.12)" stroke="#C8922A" stroke-width="1.8"/>
+            <rect x="548" y="105" width="64" height="20" fill="rgba(200,146,42,0.4)" rx="0"/>
+            <text x="580" y="96" fill="#8B6818" font-size="9.5" font-family="Inter" font-weight="600" text-anchor="middle">Jebel Ali</text>
+            <text x="580" y="108" fill="#8B6818" font-size="8.5" font-family="Inter" text-anchor="middle">Reservoir</text>
+            <text x="580" y="122" fill="#C8922A" font-size="10" font-family="Inter" font-weight="700" text-anchor="middle">41% ⚡</text>
+            <!-- Warsan Reservoir -->
+            <rect x="648" y="58" width="64" height="50" rx="5" fill="rgba(0,166,81,0.12)" stroke="#00A651" stroke-width="1.8"/>
+            <rect x="648" y="62" width="64" height="43" fill="rgba(0,166,81,0.45)" rx="0"/>
+            <text x="680" y="83" fill="#007A3D" font-size="9.5" font-family="Inter" font-weight="600" text-anchor="middle">Warsan</text>
+            <text x="680" y="95" fill="#007A3D" font-size="8.5" font-family="Inter" text-anchor="middle">Reservoir</text>
+            <text x="680" y="107" fill="#00A651" font-size="10" font-family="Inter" font-weight="700" text-anchor="middle">94%</text>
+            <!-- PS-07 Deira -->
+            <circle cx="260" cy="120" r="20" fill="rgba(0,166,81,0.12)" stroke="#00A651" stroke-width="1.8"/>
+            <text x="260" y="116" fill="#007A3D" font-size="8.5" font-family="Inter" font-weight="600" text-anchor="middle">PS-07</text>
+            <text x="260" y="127" fill="#00A651" font-size="8" font-family="Inter" text-anchor="middle">Deira ●</text>
+            <!-- PS-11 Jebel Ali -->
+            <circle cx="460" cy="130" r="20" fill="rgba(200,146,42,0.12)" stroke="#C8922A" stroke-width="1.8"/>
+            <text x="460" y="126" fill="#8B6818" font-size="8.5" font-family="Inter" font-weight="600" text-anchor="middle">PS-11</text>
+            <text x="460" y="137" fill="#C8922A" font-size="8" font-family="Inter" text-anchor="middle">JA ◆</text>
+            <!-- PS-14 standby -->
+            <circle cx="380" cy="200" r="18" fill="#F5F6F8" stroke="#9CA3AF" stroke-width="1.5"/>
+            <text x="380" y="196" fill="#6B7280" font-size="8.5" font-family="Inter" font-weight="600" text-anchor="middle">PS-14</text>
+            <text x="380" y="207" fill="#9CA3AF" font-size="8" font-family="Inter" text-anchor="middle">Standby ○</text>
+            <!-- Zone labels -->
+            <rect x="130" y="200" width="120" height="65" rx="6" fill="rgba(0,120,180,0.04)" stroke="rgba(0,120,180,0.2)" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="190" y="237" fill="#0078B4" font-size="11" font-family="Inter" font-weight="500" text-anchor="middle">Zone — Bur Dubai</text>
+            <rect x="400" y="140" width="130" height="80" rx="6" fill="rgba(0,120,180,0.04)" stroke="rgba(0,120,180,0.2)" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="465" y="183" fill="#0078B4" font-size="11" font-family="Inter" font-weight="500" text-anchor="middle">Zone — Al Barsha</text>
+            <!-- DMA markers -->
+            <text x="30" y="310" fill="#9CA3AF" font-size="9" font-family="Inter">DMA boundaries indicative · Data: DEWA SDMS · © Dubai Electricity &amp; Water Authority</text>
+          </svg>
+          <div class="map-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--dewa-green);"></div>Reservoir — Normal</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--dewa-gold);"></div>Reservoir — Low</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--dewa-green);border-radius:50%;"></div>Pump station — Running</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#9CA3AF;"></div>Pump station — Standby</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--dewa-red);"></div>Active leak</div>
+            <div class="legend-item" style="gap:8px;"><div style="width:22px;height:2px;background:var(--dewa-green);margin-top:4px;flex-shrink:0;border-radius:1px;"></div>Transmission pipeline</div>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="card">
+            <div class="card-label">Zone — Bur Dubai</div>
+            <div class="pump-stat-row">Demand <span>42,000 m³/day</span></div>
+            <div class="pump-stat-row">Avg. pressure <span style="color:var(--dewa-green);">3.4 bar</span></div>
+            <div class="pump-stat-row">Smart meters <span>128,400</span></div>
+            <div class="pump-stat-row">Fault status <span style="color:var(--dewa-green);">None</span></div>
+          </div>
+          <div class="card">
+            <div class="card-label">Zone — Al Barsha</div>
+            <div class="pump-stat-row">Demand <span>58,200 m³/day</span></div>
+            <div class="pump-stat-row">Avg. pressure <span style="color:var(--dewa-gold);">2.7 bar</span></div>
+            <div class="pump-stat-row">Smart meters <span>176,200</span></div>
+            <div class="pump-stat-row">Fault status <span style="color:var(--dewa-red);">Leak — JA-204</span></div>
+          </div>
+          <div class="card">
+            <div class="card-label">Network summary</div>
+            <div class="pump-stat-row">Total pipeline <span>3,000+ km</span></div>
+            <div class="pump-stat-row">Smart devices <span>10,000+</span></div>
+            <div class="pump-stat-row">Active accounts <span>1,048,913</span></div>
+            <div class="pump-stat-row">Active faults <span style="color:var(--dewa-red);">1</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Clock — Dubai (Gulf Standard Time, UTC+4)
+function tick() {
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
+  const t = now.toLocaleTimeString('en-GB', { hour12: false });
+  document.getElementById('clock-display').textContent = 'Dubai — ' + t;
+}
+tick(); setInterval(tick, 1000);
+
+// Navigation
+function goPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  const titles = {
+    overview: 'Dashboard Overview', tanks: 'Reservoir Management',
+    pumps: 'Pump Station Control', scada: 'SCADA / Hydronet',
+    analytics: 'Consumption Analytics', quality: 'Water Quality Monitoring (WQM)',
+    leakage: 'Leak Detection & RTU', alerts: 'Alerts & Notifications',
+    maintenance: 'Maintenance Schedule (CMMS)', users: 'User & Access Control',
+    map: 'Network Map View'
+  };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  setTimeout(initCharts, 80);
+}
+
+// Pump toggle
+function togglePump(el) {
+  const track = el.querySelector('.toggle-track');
+  const label = el.querySelector('.toggle-label');
+  if (track.classList.contains('on')) {
+    track.classList.remove('on');
+    label.textContent = 'Stopped — click to start';
+  } else {
+    track.classList.add('on');
+    label.textContent = 'Running — click to stop';
+  }
+}
+
+// Alert dismiss
+function dismissAlert(btn) {
+  btn.closest('.alert-item').style.opacity = '0.45';
+  btn.textContent = 'Acknowledged';
+  btn.disabled = true;
+}
+
+// Live updates
+setInterval(() => {
+  const flow = Math.round(1380 + Math.random() * 100);
+  const pres = (3.0 + Math.random() * 0.5).toFixed(1);
+  const ef = document.getElementById('ov-flow');
+  const ep = document.getElementById('ov-pressure');
+  if (ef) ef.innerHTML = flow.toLocaleString() + '<span class="card-unit">m³/h</span>';
+  if (ep) ep.innerHTML = pres + '<span class="card-unit">bar</span>';
+}, 4000);
+
+// Charts
+const G = '#00A651', Gb = 'rgba(0,166,81,0.12)', B = '#0078B4', Bb = 'rgba(0,120,180,0.1)';
+const Au = '#C8922A', Ab = 'rgba(200,146,42,0.12)', Rd = '#D32F2F', N = '#003049';
+const gc = '#E5E7EB', tc = '#9CA3AF';
+const ff = "'Inter', sans-serif";
+const base = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: gc }, ticks: { color: tc, font: { family: ff, size: 11 } } },
+    y: { grid: { color: gc }, ticks: { color: tc, font: { family: ff, size: 11 } } }
+  }
+};
+
+let done = {};
+function initCharts() {
+  // Overview
+  if (!done['ov'] && document.getElementById('chart-overview')) {
+    done['ov'] = true;
+    new Chart(document.getElementById('chart-overview'), {
+      type: 'line',
+      data: {
+        labels: ['00','02','04','06','08','10','12','14','16','18','20','22'],
+        datasets: [{
+          data: [0.08,0.05,0.04,0.28,0.46,0.38,0.30,0.34,0.40,0.35,0.24,0.14],
+          borderColor: G, backgroundColor: Gb, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: G
+        }]
+      }, options: base
+    });
+  }
+  // Tanks
+  if (!done['tk'] && document.getElementById('chart-tanks')) {
+    done['tk'] = true;
+    new Chart(document.getElementById('chart-tanks'), {
+      type: 'bar',
+      data: {
+        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [
+          { label: 'Al Quoz', data: [580,510,640,490,620,550,510], backgroundColor: 'rgba(0,166,81,0.7)' },
+          { label: 'Jebel Ali', data: [310,280,350,300,290,330,290], backgroundColor: 'rgba(200,146,42,0.7)' },
+          { label: 'Warsan', data: [140,110,180,130,160,190,160], backgroundColor: 'rgba(0,120,180,0.7)' }
+        ]
+      },
+      options: { ...base, plugins: { legend: { display: true, labels: { color: tc, font: { family: ff, size: 11 }, boxWidth: 12 } } } }
+    });
+  }
+  // Pumps
+  if (!done['ps'] && document.getElementById('chart-pumps')) {
+    done['ps'] = true;
+    new Chart(document.getElementById('chart-pumps'), {
+      type: 'bar',
+      data: {
+        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [
+          { label: 'PS-07 Deira', data: [9,8,10,7,9,8,7], backgroundColor: 'rgba(0,166,81,0.75)' },
+          { label: 'PS-11 Jebel Ali', data: [5,6,5,7,4,6,5], backgroundColor: 'rgba(200,146,42,0.75)' },
+          { label: 'PS-14 Al Quoz', data: [0,0,1,0,0,0,0], backgroundColor: 'rgba(155,163,174,0.5)' }
+        ]
+      },
+      options: { ...base, plugins: { legend: { display: true, labels: { color: tc, font: { family: ff, size: 11 }, boxWidth: 12 } } } }
+    });
+  }
+  // SCADA RTU
+  if (!done['rtu'] && document.getElementById('chart-rtu')) {
+    done['rtu'] = true;
+    new Chart(document.getElementById('chart-rtu'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Online', 'Maintenance', 'Offline', 'Fault'],
+        datasets: [{ data: [9840, 278, 94, 35], backgroundColor: [G, Au, '#9CA3AF', Rd], borderColor: '#fff', borderWidth: 2 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'right', labels: { color: tc, font: { family: ff, size: 11 }, boxWidth: 12 } } } }
+    });
+  }
+  // Monthly
+  if (!done['mo'] && document.getElementById('chart-monthly')) {
+    done['mo'] = true;
+    new Chart(document.getElementById('chart-monthly'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+        datasets: [{
+          data: [78.4, 71.2, 80.6, 84.2, 0,0,0,0,0,0,0,0],
+          backgroundColor: (ctx) => ctx.dataIndex === 3 ? G : Gb,
+          borderColor: (ctx) => ctx.dataIndex === 3 ? G : 'rgba(0,166,81,0.5)',
+          borderWidth: 1.5, borderRadius: 5
+        }]
+      }, options: base
+    });
+  }
+  // Hourly
+  if (!done['hr'] && document.getElementById('chart-hourly')) {
+    done['hr'] = true;
+    new Chart(document.getElementById('chart-hourly'), {
+      type: 'line',
+      data: {
+        labels: ['5AM','7AM','9AM','11AM','1PM','3PM','5PM','7PM','9PM'],
+        datasets: [{ data: [620,1840,1420,1180,1260,1340,1580,1280,740], borderColor: B, backgroundColor: Bb, fill: true, tension: 0.4, pointRadius: 2 }]
+      }, options: base
+    });
+  }
+  // Segment
+  if (!done['seg'] && document.getElementById('chart-segment')) {
+    done['seg'] = true;
+    new Chart(document.getElementById('chart-segment'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Residential','Commercial','Industrial','Government'],
+        datasets: [{ data: [48,32,13,7], backgroundColor: [G, B, Au, N], borderColor: '#fff', borderWidth: 2 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { color: tc, font: { family: ff, size: 11 }, boxWidth: 12 } } } }
+    });
+  }
+  // Quality
+  if (!done['wq'] && document.getElementById('chart-quality')) {
+    done['wq'] = true;
+    new Chart(document.getElementById('chart-quality'), {
+      type: 'line',
+      data: {
+        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [
+          { label: 'pH', data: [7.3,7.5,7.4,7.6,7.3,7.4,7.4], borderColor: G, tension: 0.4, pointRadius: 3 },
+          { label: 'Turbidity (NTU)', data: [3.1,3.4,2.9,2.8,3.2,3.0,2.8], borderColor: B, tension: 0.4, pointRadius: 3 },
+          { label: 'Temp (°C)', data: [25,26,27,27,26,27,27], borderColor: Au, tension: 0.4, pointRadius: 3 }
+        ]
+      },
+      options: { ...base, plugins: { legend: { display: true, labels: { color: tc, font: { family: ff, size: 11 }, boxWidth: 12 } } } }
+    });
+  }
+}
+
+window.addEventListener('load', initCharts);
+</script>
+</body>
+</html>
